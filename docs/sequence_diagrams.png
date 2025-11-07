@@ -1,0 +1,104 @@
+# Sequence Diagrams
+
+This file contains textual descriptions of sequence diagrams for key flows.
+These can be visualized using tools like PlantUML or Mermaid.
+
+## 1. Player Registration Flow
+
+```
+User -> Player Service: POST /players (name, initial_balance)
+Player Service -> Database: Create player record
+Player Service -> Message Broker: Publish "player_created" event
+Message Broker -> Transaction Service: Forward event
+Transaction Service -> Database: Log player creation
+Transaction Service --> User: Success response
+```
+
+## 2. Deposit Flow
+
+```
+User -> Player Service: POST /players/{id}/deposit (amount)
+Player Service -> Database: Update player balance
+Player Service -> Message Broker: Publish "deposit" event
+Message Broker -> Transaction Service: Forward event
+Transaction Service -> Database: Log deposit transaction
+Player Service --> User: Updated balance
+```
+
+## 3. Place Bet and Win Flow
+
+```
+User -> Player Service: POST /players/{id}/bet (game_id, amount)
+Player Service -> Database: Check balance
+Player Service -> Database: Deduct bet amount
+Player Service -> Game Service: POST /games/{game_id}/bet
+Game Service -> Game Logic: Execute game
+Game Service -> Game Logic: Determine win/lose
+Game Service -> Message Broker: Publish "bet_resolved" event (win)
+Message Broker -> Transaction Service: Forward event
+Transaction Service -> Database: Log bet result
+Message Broker -> Admin Service: Forward event
+Admin Service -> Fraud Detector: Check patterns
+Message Broker -> Visualizer Service: Forward event
+Visualizer Service -> Dashboard: Update metrics
+Game Service -> Player Service: Return result (win_amount)
+Player Service -> Database: Add winnings to balance
+Player Service --> User: Updated balance + result
+```
+
+## 4. Fraud Detection Flow
+
+```
+Game Service -> Message Broker: Publish "bet_resolved" event
+Message Broker -> Admin Service: Forward event
+Admin Service -> Fraud Detector: Analyze player history
+Fraud Detector -> Fraud Detector: Check consecutive wins
+Fraud Detector -> Fraud Detector: Check bet spike
+Fraud Detector --> Admin Service: Suspicious pattern detected
+Admin Service -> Database: Create flag record
+Admin Service -> Message Broker: Publish "player_flagged" event
+Message Broker -> Player Service: Forward event
+Player Service -> Database: Update player status to "flagged"
+Message Broker -> Visualizer Service: Forward event
+Visualizer Service -> Dashboard: Show flagged player alert
+```
+
+## 5. Admin Suspend Player Flow
+
+```
+Admin -> Admin Service: POST /admin/players/{id}/suspend
+Admin Service -> Database: Update flag record status
+Admin Service -> Message Broker: Publish "player_suspended" event
+Message Broker -> Player Service: Forward event
+Player Service -> Database: Update player status to "suspended"
+Message Broker -> Transaction Service: Forward event
+Transaction Service -> Database: Log suspension
+Admin Service --> Admin: Confirmation
+```
+
+## 6. View Transaction History Flow
+
+```
+User -> Transaction Service: GET /transactions?player_id={id}
+Transaction Service -> Database: Query transactions
+Transaction Service --> User: List of transactions
+```
+
+## 7. Dashboard Monitoring Flow
+
+```
+Loop: Continuous
+  Message Broker -> Visualizer Service: Stream events
+  Visualizer Service -> In-Memory Store: Update metrics
+  Visualizer Service -> Dashboard: Refresh display
+  Dashboard --> User: Show live metrics
+End Loop
+```
+
+## Notes
+
+- All events are published asynchronously via RabbitMQ
+- Services can process events independently
+- The system maintains eventual consistency
+- Transaction Service provides audit trail
+- Admin Service operates independently for fraud detection

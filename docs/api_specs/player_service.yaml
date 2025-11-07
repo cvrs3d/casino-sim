@@ -1,0 +1,148 @@
+openapi: 3.0.0
+info:
+  title: Player Service API
+  version: 0.1.0
+  description: API for managing player accounts and balances
+
+servers:
+  - url: http://localhost:8001
+    description: Local development server
+
+paths:
+  /:
+    get:
+      summary: Service root
+      responses:
+        '200':
+          description: Service information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /players/:
+    post:
+      summary: Create a new player
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                initial_balance:
+                  type: number
+                  format: float
+              required:
+                - name
+      responses:
+        '200':
+          description: Player created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+
+  /players/{player_id}:
+    get:
+      summary: Get player by ID
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Player details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '404':
+          description: Player not found
+
+  /players/{player_id}/deposit:
+    post:
+      summary: Deposit funds to player account
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+      responses:
+        '200':
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+
+  /players/{player_id}/withdraw:
+    post:
+      summary: Withdraw funds from player account
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+      responses:
+        '200':
+          description: Withdrawal successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '400':
+          description: Insufficient balance
+
+components:
+  schemas:
+    Player:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        balance:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [active, flagged, suspended]
