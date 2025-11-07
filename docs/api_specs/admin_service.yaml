@@ -1,0 +1,107 @@
+openapi: 3.0.0
+info:
+  title: Admin Service API
+  version: 0.1.0
+  description: API for admin operations and fraud management
+
+servers:
+  - url: http://localhost:8004
+    description: Local development server
+
+paths:
+  /:
+    get:
+      summary: Service root
+      responses:
+        '200':
+          description: Service information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                  status:
+                    type: string
+
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /admin/flagged-players:
+    get:
+      summary: Get list of flagged players
+      responses:
+        '200':
+          description: List of flagged players
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flagged_players:
+                    type: array
+                    items:
+                      type: object
+
+  /admin/players/{player_id}/flag:
+    post:
+      summary: Flag a player for suspicious activity
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: reason
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Player flagged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  player_id:
+                    type: integer
+                  flagged:
+                    type: boolean
+                  reason:
+                    type: string
+
+  /admin/players/{player_id}/suspend:
+    post:
+      summary: Suspend a player account
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Player suspended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  player_id:
+                    type: integer
+                  suspended:
+                    type: boolean
